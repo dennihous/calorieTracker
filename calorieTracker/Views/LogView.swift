@@ -29,8 +29,7 @@ struct LogView: View {
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
-                // Same pattern as Calendar: fixed entries panel height
-                let panelHeight = max(300, proxy.size.height * 0.56)
+                let panelHeight = max(300, proxy.size.height * 0.63)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: UI.outerSpacing) {
@@ -90,16 +89,6 @@ struct LogView: View {
                         .softCard()
 
                         // Summary
-                        HStack(alignment: .firstTextBaseline) {
-                            Label("Total", systemImage: "flame.fill")
-                            Spacer()
-                            Text("\(dayTotal) kcal")
-                                .bold()
-                                .monospacedDigit()
-                                .pillBackground()
-                        }
-                        .padding(.horizontal, UI.outerSpacing)
-
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(alignment: .firstTextBaseline) {
                                 Text(formatted(draft.date)).font(.headline)
@@ -109,7 +98,7 @@ struct LogView: View {
                                     Text("\(store.totalCalories(on: draft.date)) kcal")
                                         .bold().monospacedDigit()
                                 }
-                                .pillBackground()
+                                .dangerPill()
                             }
 
                             Divider()

@@ -26,8 +26,22 @@ extension View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
-                Capsule(style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
+                Capsule(style: .continuous).fill(
+                    LinearGradient(
+                        colors: [Theme.accent.opacity(0.18), Theme.accent.opacity(0.10)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                )
             )
+    }
+    
+    func dangerPill() -> some View {
+        self
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous).fill(Color.red)
+            )
+            .foregroundStyle(Color.white)
     }
 }

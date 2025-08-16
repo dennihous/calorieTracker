@@ -87,7 +87,7 @@ struct CalendarTab: View {
                                 Image(systemName: "flame.fill")
                                 Text("\(store.totalCalories(on: selectedDate)) kcal").bold().monospacedDigit()
                             }
-                            .pillBackground()
+                            .dangerPill()
                         }
 
                         Divider()

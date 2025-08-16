@@ -21,7 +21,7 @@ struct DayCell: View {
                 .frame(maxWidth: .infinity)
 
             Circle()
-                .fill(Color.primary)
+                .fill(Theme.accent)
                 .frame(width: 6, height: 6)
                 .opacity(hasLog ? 0.9 : 0)
 
@@ -36,12 +36,13 @@ struct DayCell: View {
         .frame(height: 52)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
+                .fill(isSelected ? Theme.accent.opacity(0.12) : Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
+                .strokeBorder(isSelected ? Theme.accent : Color.clear, lineWidth: 1)
         )
     }
 }
+
 

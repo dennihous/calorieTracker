@@ -14,13 +14,6 @@ struct ContentView: View {
     @StateObject private var draft = EntryDraft()
     @State private var selectedTab: AppTab = .log
 
-    private var bgGradient: LinearGradient {
-        LinearGradient(
-            colors: [Color(.systemGroupedBackground), Color(.secondarySystemGroupedBackground)],
-            startPoint: .top, endPoint: .bottom
-        )
-    }
-
     var body: some View {
         TabView(selection: $selectedTab) {
             LogView()
@@ -28,16 +21,16 @@ struct ContentView: View {
                 .environmentObject(draft)
                 .tabItem { Label("Log", systemImage: "plus.circle") }
                 .tag(AppTab.log)
-                .background(bgGradient.ignoresSafeArea())
+                .background(Theme.bgGradient.ignoresSafeArea())
 
             CalendarTab(selectedTab: $selectedTab)
                 .environmentObject(store)
                 .environmentObject(draft)
                 .tabItem { Label("Calendar", systemImage: "calendar") }
                 .tag(AppTab.calendar)
-                .background(bgGradient.ignoresSafeArea())
+                .background(Theme.bgGradient.ignoresSafeArea())
         }
-        .tint(.accentColor)
+        .tint(Theme.accent)
     }
 }
 
