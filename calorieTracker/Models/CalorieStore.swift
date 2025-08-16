@@ -34,7 +34,6 @@ final class CalorieStore: ObservableObject {
         else { entriesByDay[key] = dayEntries }
     }
 
-    /// New: used when editing an existing entry (handles date changes too)
     func replace(old: FoodEntry, with new: FoodEntry) {
         remove(old)
         add(new)

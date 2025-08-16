@@ -14,7 +14,6 @@ enum UI {
 }
 
 extension View {
-    /// Soft “card” with material background + subtle shadow.
     func softCard(padding: CGFloat = UI.outerSpacing) -> some View {
         self
             .padding(padding)
@@ -22,7 +21,6 @@ extension View {
             .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
-    /// A pill-style background (good for totals).
     func pillBackground() -> some View {
         self
             .padding(.horizontal, 10)

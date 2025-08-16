@@ -11,7 +11,7 @@ struct CalendarTab: View {
     @EnvironmentObject private var draft: EntryDraft
     @Binding var selectedTab: AppTab
 
-    @State private var monthOffset: Int = 0  // 0 = current month
+    @State private var monthOffset: Int = 0
     @State private var selectedDate: Date = Date()
 
     private var calendar: Calendar { var c = Calendar.current; c.timeZone = .current; return c }
@@ -63,7 +63,7 @@ struct CalendarTab: View {
                     }
                     .padding(.horizontal, UI.outerSpacing)
 
-                    // Calendar grid (fixed layout)
+                    // Calendar grid
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
                         ForEach(0..<leadingBlankDays, id: \.self) { _ in Color.clear.frame(height: 52) }
                         ForEach(1...daysInDisplayedMonth, id: \.self) { day in
@@ -79,7 +79,6 @@ struct CalendarTab: View {
                     }
                     .padding(.horizontal, UI.outerSpacing)
 
-                    // Entries panel (fixed height, scrolls internally)
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(alignment: .firstTextBaseline) {
                             Text(formatted(selectedDate)).font(.headline)
@@ -123,8 +122,6 @@ struct CalendarTab: View {
                     ).ignoresSafeArea()
                 )
             }
-
-            // Centered title
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -138,8 +135,6 @@ struct CalendarTab: View {
                     } label: { Label("Today", systemImage: "target") }
                 }
             }
-
-            // A little padding ABOVE the tab bar icons
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: 8)
             }

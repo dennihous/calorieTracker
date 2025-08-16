@@ -13,7 +13,7 @@ final class EntryDraft: ObservableObject {
     @Published var meal: MealType = .breakfast
     @Published var name: String = ""
     @Published var calories: Int? = nil
-    @Published var editingEntry: FoodEntry? = nil   // non-nil → editing
+    @Published var editingEntry: FoodEntry? = nil
 
     var isEditing: Bool { editingEntry != nil }
 

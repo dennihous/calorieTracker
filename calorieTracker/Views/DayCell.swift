@@ -20,7 +20,6 @@ struct DayCell: View {
                 .font(isSelected ? .body.weight(.bold) : .body)
                 .frame(maxWidth: .infinity)
 
-            // Unified type to avoid .primary vs .clear mismatch
             Circle()
                 .fill(Color.primary)
                 .frame(width: 6, height: 6)

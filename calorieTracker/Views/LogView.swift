@@ -66,7 +66,7 @@ struct LogView: View {
                                 .submitLabel(.next)
                                 .onSubmit { focusedField = .calories }
 
-                            // Calories field and Add/Update button — SAME WIDTH & HEIGHT
+                            // Calories field and Add/Update button
                             HStack(spacing: 8) {
                                 TextField("Calories", value: $draft.calories, formatter: calorieFormatter)
                                     .keyboardType(.numberPad)
@@ -100,7 +100,6 @@ struct LogView: View {
                         }
                         .padding(.horizontal, UI.outerSpacing)
 
-                        // FIXED-HEIGHT, SCROLLABLE entries panel
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(alignment: .firstTextBaseline) {
                                 Text(formatted(draft.date)).font(.headline)
@@ -155,21 +154,16 @@ struct LogView: View {
                 ).ignoresSafeArea()
             )
 
-            // Centered, bigger title
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Calorie Log")
-                        .font(.title2.weight(.bold))   // make bigger or use .title
+                        .font(.title2.weight(.bold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
             }
-
-            // Keyboard toolbar
             .toolbar { toolbarKeyboardDone }
-
-            // A little padding ABOVE the tab bar icons
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: 10)
             }
