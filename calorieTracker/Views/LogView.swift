@@ -14,6 +14,8 @@ struct LogView: View {
     @FocusState private var focusedField: Field?
     enum Field { case name, calories }
 
+    private let fieldHeight: CGFloat = 44
+
     private var dayTotal: Int { store.totalCalories(on: draft.date) }
 
     private var calorieFormatter: NumberFormatter {
@@ -26,23 +28,27 @@ struct LogView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Editing banner
-                    if draft.isEditing {
-                        HStack(spacing: 8) {
-                            Image(systemName: "pencil.circle.fill")
-                            Text("Editing existing entry")
-                            Spacer()
-                            Button("Cancel") { draft.clear() }
-                        }
-                        .padding(12)
-                        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
-                    }
+            GeometryReader { proxy in
+                // Same pattern as Calendar: fixed entries panel height
+                let panelHeight = max(300, proxy.size.height * 0.56)
 
-                    // Input Card
-                    GroupBox {
-                        VStack(alignment: .leading, spacing: 12) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: UI.outerSpacing) {
+
+                        // Editing banner
+                        if draft.isEditing {
+                            HStack(spacing: 8) {
+                                Image(systemName: "pencil.circle.fill")
+                                Text("Editing existing entry").font(.subheadline)
+                                Spacer()
+                                Button("Cancel") { draft.clear() }
+                            }
+                            .softCard()
+                        }
+
+                        // Input card
+                        VStack(alignment: .leading, spacing: UI.innerSpacing) {
+
                             DatePicker("Date", selection: $draft.date, displayedComponents: [.date])
                                 .datePickerStyle(.compact)
 
@@ -60,80 +66,113 @@ struct LogView: View {
                                 .submitLabel(.next)
                                 .onSubmit { focusedField = .calories }
 
+                            // Calories field and Add/Update button — SAME WIDTH & HEIGHT
                             HStack(spacing: 8) {
                                 TextField("Calories", value: $draft.calories, formatter: calorieFormatter)
                                     .keyboardType(.numberPad)
                                     .textFieldStyle(.roundedBorder)
                                     .focused($focusedField, equals: .calories)
+                                    .monospacedDigit()
+                                    .frame(height: fieldHeight)
+                                    .frame(maxWidth: .infinity)
 
                                 Button(action: saveEntry) {
-                                    Label(draft.isEditing ? "Update" : "Add", systemImage: draft.isEditing ? "square.and.arrow.down" : "checkmark.circle.fill")
+                                    Label(
+                                        draft.isEditing ? "Update" : "Add",
+                                        systemImage: draft.isEditing ? "square.and.arrow.down" : "checkmark.circle.fill"
+                                    )
                                 }
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(EqualHeightFilledButtonStyle(height: 33))
                                 .disabled(!canSave)
+                                .frame(maxWidth: .infinity)
                             }
                         }
-                    } label: {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                        .softCard()
 
-                    // Summary
-                    HStack {
-                        Label("Total", systemImage: "flame.fill")
-                        Spacer()
-                        Text("\(dayTotal) kcal").bold()
-                    }
-                    .padding(.horizontal)
+                        // Summary
+                        HStack(alignment: .firstTextBaseline) {
+                            Label("Total", systemImage: "flame.fill")
+                            Spacer()
+                            Text("\(dayTotal) kcal")
+                                .bold()
+                                .monospacedDigit()
+                                .pillBackground()
+                        }
+                        .padding(.horizontal, UI.outerSpacing)
 
-                    // Entries List for selected date
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(formatted(draft.date))
-                            .font(.headline)
-                            .padding(.horizontal)
-
-                        if store.entries(on: draft.date).isEmpty {
-                            VStack(spacing: 8) {
-                                Image(systemName: "fork.knife.circle")
-                                    .font(.largeTitle)
-                                    .foregroundStyle(.secondary)
-                                Text("No entries yet").foregroundStyle(.secondary)
-                                Text("Add your first item above.")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                        // FIXED-HEIGHT, SCROLLABLE entries panel
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(alignment: .firstTextBaseline) {
+                                Text(formatted(draft.date)).font(.headline)
+                                Spacer()
+                                HStack(spacing: 6) {
+                                    Image(systemName: "flame.fill")
+                                    Text("\(store.totalCalories(on: draft.date)) kcal")
+                                        .bold().monospacedDigit()
+                                }
+                                .pillBackground()
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
-                        } else {
-                            LazyVStack(spacing: 0) {
-                                ForEach(store.entries(on: draft.date)) { entry in
-                                    HStack(spacing: 12) {
-                                        Image(systemName: entry.meal.symbol)
-                                        VStack(alignment: .leading) {
-                                            Text(entry.name).font(.headline)
-                                            Text(entry.meal.title).font(.caption).foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Text("\(entry.calories) kcal")
-                                        Menu {
-                                            Button { startEditing(entry) } label: { Label("Edit", systemImage: "pencil") }
-                                            Button(role: .destructive) { store.remove(entry) } label: { Label("Delete", systemImage: "trash") }
-                                        } label: {
-                                            Image(systemName: "ellipsis.circle")
+
+                            Divider()
+
+                            if store.entries(on: draft.date).isEmpty {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "fork.knife.circle")
+                                        .font(.largeTitle)
+                                        .foregroundStyle(.secondary)
+                                    Text("No entries yet").foregroundStyle(.secondary)
+                                    Text("Add your first item above.")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            } else {
+                                ScrollView {
+                                    VStack(spacing: 12) {
+                                        ForEach(store.entries(on: draft.date)) { entry in
+                                            EntryRow(
+                                                entry: entry,
+                                                onEdit: { startEditing(entry) },
+                                                onDelete: { store.remove(entry) }
+                                            )
                                         }
                                     }
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(Color(.systemBackground))
-                                    Divider()
+                                    .padding(.vertical, 4)
                                 }
+                                .scrollIndicators(.visible)
                             }
                         }
+                        .softCard()
+                        .frame(height: panelHeight)
                     }
+                    .padding(.vertical, UI.outerSpacing)
                 }
-                .padding()
             }
-            .navigationTitle("Calorie Log")
+            .background(
+                LinearGradient(
+                    colors: [Color(.systemGroupedBackground), Color(.secondarySystemGroupedBackground)],
+                    startPoint: .top, endPoint: .bottom
+                ).ignoresSafeArea()
+            )
+
+            // Centered, bigger title
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Calorie Log")
+                        .font(.title2.weight(.bold))   // make bigger or use .title
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+            }
+
+            // Keyboard toolbar
             .toolbar { toolbarKeyboardDone }
+
+            // A little padding ABOVE the tab bar icons
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 10)
+            }
         }
     }
 
@@ -175,3 +214,23 @@ struct LogView: View {
         return df.string(from: date)
     }
 }
+
+private struct EqualHeightFilledButtonStyle: ButtonStyle {
+    var height: CGFloat = 44
+    var cornerRadius: CGFloat = 5
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity, minHeight: height)
+            .padding(.horizontal, 12)
+            .background(configuration.isPressed ? Color.accentColor.opacity(0.85) : Color.accentColor)
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Color.accentColor.opacity(0.65), lineWidth: 0.5)
+            )
+            .animation(.easeInOut(duration: 0.08), value: configuration.isPressed)
+    }
+}
+

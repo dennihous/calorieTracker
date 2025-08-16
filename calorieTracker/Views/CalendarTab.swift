@@ -11,33 +11,16 @@ struct CalendarTab: View {
     @EnvironmentObject private var draft: EntryDraft
     @Binding var selectedTab: AppTab
 
-    @State private var monthOffset: Int = 0
+    @State private var monthOffset: Int = 0  // 0 = current month
     @State private var selectedDate: Date = Date()
 
-    private var calendar: Calendar {
-        var c = Calendar.current
-        c.timeZone = .current
-        return c
-    }
+    private var calendar: Calendar { var c = Calendar.current; c.timeZone = .current; return c }
 
-    private var firstOfCurrentMonth: Date {
-        calendar.date(from: calendar.dateComponents([.year, .month], from: Date()))!
-    }
+    private var firstOfCurrentMonth: Date { calendar.date(from: calendar.dateComponents([.year, .month], from: Date()))! }
+    private var firstOfDisplayedMonth: Date { calendar.date(byAdding: .month, value: monthOffset, to: firstOfCurrentMonth)! }
+    private var daysInDisplayedMonth: Int { calendar.range(of: .day, in: .month, for: firstOfDisplayedMonth)!.count }
 
-    private var firstOfDisplayedMonth: Date {
-        calendar.date(byAdding: .month, value: monthOffset, to: firstOfCurrentMonth)!
-    }
-
-    private var daysInDisplayedMonth: Int {
-        calendar.range(of: .day, in: .month, for: firstOfDisplayedMonth)!.count
-    }
-
-    private var monthTitle: String {
-        let df = DateFormatter()
-        df.calendar = calendar
-        df.dateFormat = "LLLL yyyy"
-        return df.string(from: firstOfDisplayedMonth)
-    }
+    private var monthTitle: String { let df = DateFormatter(); df.calendar = calendar; df.dateFormat = "LLLL yyyy"; return df.string(from: firstOfDisplayedMonth) }
 
     private var leadingBlankDays: Int {
         let weekdayOfFirst = calendar.component(.weekday, from: firstOfDisplayedMonth)
@@ -46,122 +29,123 @@ struct CalendarTab: View {
     }
 
     private var weekdaySymbols: [String] {
-        let symbols = calendar.shortWeekdaySymbols // starts with Sunday
-        let start = calendar.firstWeekday - 1 // 0-indexed
+        let symbols = calendar.shortWeekdaySymbols
+        let start = calendar.firstWeekday - 1
         return Array(symbols[start...] + symbols[..<start])
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                // Month header
-                HStack {
-                    Button { monthOffset -= 1 } label: { Image(systemName: "chevron.left") }
-                    Spacer()
-                    Text(monthTitle).font(.headline)
-                    Spacer()
-                    Button { monthOffset += 1 } label: { Image(systemName: "chevron.right") }
-                }
-                .padding(.horizontal)
+            GeometryReader { proxy in
+                let panelHeight = max(220, proxy.size.height * 0.36)
 
-                // Weekday labels
-                HStack {
-                    ForEach(weekdaySymbols, id: \.self) { d in
-                        Text(d)
-                            .font(.caption)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
+                VStack(spacing: UI.outerSpacing) {
 
-                // Calendar grid
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
-                    ForEach(0..<leadingBlankDays, id: \.self) { _ in
-                        Color.clear.frame(height: 44)
-                    }
-                    ForEach(1...daysInDisplayedMonth, id: \.self) { day in
-                        let date = calendar.date(byAdding: .day, value: day - 1, to: firstOfDisplayedMonth)!
-                        DayCell(
-                            date: date,
-                            isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
-                            hasLog: store.hasEntries(on: date),
-                            total: store.totalCalories(on: date)
-                        )
-                        .onTapGesture { selectedDate = date }
-                    }
-                }
-                .padding(.horizontal)
-
-                // Selected day summary
-                VStack(alignment: .leading, spacing: 8) {
+                    // Month header
                     HStack {
-                        Text(formatted(selectedDate)).font(.headline)
+                        Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { monthOffset -= 1 } } label: {
+                            Image(systemName: "chevron.left")
+                        }
                         Spacer()
-                        HStack(spacing: 6) {
-                            Image(systemName: "flame.fill")
-                            Text("\(store.totalCalories(on: selectedDate)) kcal").bold()
+                        Text(monthTitle).font(.title3.weight(.semibold))
+                        Spacer()
+                        Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { monthOffset += 1 } } label: {
+                            Image(systemName: "chevron.right")
                         }
                     }
+                    .softCard()
 
-                    if store.entries(on: selectedDate).isEmpty {
-                        VStack(spacing: 8) {
-                            Image(systemName: "rectangle.and.pencil.and.ellipsis")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                            Text("No entries for this day").foregroundStyle(.secondary)
+                    // Weekday labels
+                    HStack {
+                        ForEach(weekdaySymbols, id: \.self) { d in
+                            Text(d).font(.caption).frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                    } else {
-                        VStack(spacing: 0) {
-                            ForEach(store.entries(on: selectedDate)) { entry in
-                                HStack {
-                                    Image(systemName: entry.meal.symbol)
-                                    VStack(alignment: .leading) {
-                                        Text(entry.name)
-                                        Text(entry.meal.title).font(.caption).foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    Text("\(entry.calories) kcal")
-                                    Menu {
-                                        Button { startEditing(entry) } label: { Label("Edit", systemImage: "pencil") }
-                                        Button(role: .destructive) { store.remove(entry) } label: { Label("Delete", systemImage: "trash") }
-                                    } label: {
-                                        Image(systemName: "ellipsis.circle")
+                    }
+                    .padding(.horizontal, UI.outerSpacing)
+
+                    // Calendar grid (fixed layout)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+                        ForEach(0..<leadingBlankDays, id: \.self) { _ in Color.clear.frame(height: 52) }
+                        ForEach(1...daysInDisplayedMonth, id: \.self) { day in
+                            let date = calendar.date(byAdding: .day, value: day - 1, to: firstOfDisplayedMonth)!
+                            DayCell(
+                                date: date,
+                                isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
+                                hasLog: store.hasEntries(on: date),
+                                total: store.totalCalories(on: date)
+                            )
+                            .onTapGesture { withAnimation(.easeInOut(duration: 0.15)) { selectedDate = date } }
+                        }
+                    }
+                    .padding(.horizontal, UI.outerSpacing)
+
+                    // Entries panel (fixed height, scrolls internally)
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(formatted(selectedDate)).font(.headline)
+                            Spacer()
+                            HStack(spacing: 6) {
+                                Image(systemName: "flame.fill")
+                                Text("\(store.totalCalories(on: selectedDate)) kcal").bold().monospacedDigit()
+                            }
+                            .pillBackground()
+                        }
+
+                        Divider()
+
+                        if store.entries(on: selectedDate).isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "rectangle.and.pencil.and.ellipsis").font(.title2).foregroundStyle(.secondary)
+                                Text("No entries for this day").foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            ScrollView {
+                                VStack(spacing: 12) {
+                                    ForEach(store.entries(on: selectedDate)) { entry in
+                                        EntryRow(entry: entry, onEdit: { startEditing(entry) }, onDelete: { store.remove(entry) })
                                     }
                                 }
-                                .padding(.vertical, 6)
-                                Divider()
+                                .padding(.vertical, 4)
                             }
+                            .scrollIndicators(.visible)
                         }
                     }
+                    .softCard()
+                    .frame(height: panelHeight)
                 }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .padding(.horizontal)
-
-                Spacer(minLength: 0)
+                .padding(.vertical, UI.outerSpacing)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .background(
+                    LinearGradient(
+                        colors: [Color(.systemGroupedBackground), Color(.secondarySystemGroupedBackground)],
+                        startPoint: .top, endPoint: .bottom
+                    ).ignoresSafeArea()
+                )
             }
-            .navigationTitle("Calendar")
+
+            // Centered title
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Calendar").font(.title2.weight(.bold)).minimumScaleFactor(0.85) 
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        monthOffset = 0
-                        selectedDate = Date()
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                            monthOffset = 0; selectedDate = Date()
+                        }
                     } label: { Label("Today", systemImage: "target") }
                 }
+            }
+
+            // A little padding ABOVE the tab bar icons
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 8)
             }
         }
     }
 
-    private func startEditing(_ entry: FoodEntry) {
-        draft.load(from: entry)
-        selectedTab = .log
-    }
-
-    private func formatted(_ date: Date) -> String {
-        let df = DateFormatter()
-        df.calendar = calendar
-        df.dateStyle = .full
-        return df.string(from: date)
-    }
+    private func startEditing(_ entry: FoodEntry) { draft.load(from: entry); selectedTab = .log }
+    private func formatted(_ date: Date) -> String { let df = DateFormatter(); df.calendar = calendar; df.dateStyle = .full; return df.string(from: date) }
 }

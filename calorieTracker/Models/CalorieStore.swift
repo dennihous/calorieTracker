@@ -4,7 +4,8 @@
 //
 //  Created by Sam Houston on 16/08/2025.
 //
-import SwiftUI
+import Foundation
+import Combine
 
 final class CalorieStore: ObservableObject {
     @Published private(set) var entriesByDay: [Date: [FoodEntry]] = [:]
@@ -33,47 +34,13 @@ final class CalorieStore: ObservableObject {
         else { entriesByDay[key] = dayEntries }
     }
 
+    /// New: used when editing an existing entry (handles date changes too)
     func replace(old: FoodEntry, with new: FoodEntry) {
-        // If the date changed, move between days
         remove(old)
         add(new)
     }
 
-    func entries(on date: Date) -> [FoodEntry] {
-        entriesByDay[dayKey(for: date)] ?? []
-    }
-
-    func totalCalories(on date: Date) -> Int {
-        entries(on: date).map { $0.calories }.reduce(0, +)
-    }
-
+    func entries(on date: Date) -> [FoodEntry] { entriesByDay[dayKey(for: date)] ?? [] }
+    func totalCalories(on date: Date) -> Int { entries(on: date).map { $0.calories }.reduce(0, +) }
     func hasEntries(on date: Date) -> Bool { !entries(on: date).isEmpty }
 }
-
-final class EntryDraft: ObservableObject {
-    @Published var date: Date = Date()
-    @Published var meal: MealType = .breakfast
-    @Published var name: String = ""
-    @Published var calories: Int? = nil
-    @Published var editingEntry: FoodEntry? = nil
-
-    var isEditing: Bool { editingEntry != nil }
-
-    func load(from entry: FoodEntry) {
-        date = entry.date
-        meal = entry.meal
-        name = entry.name
-        calories = entry.calories
-        editingEntry = entry
-    }
-
-    func clear() {
-        date = Date()
-        meal = .breakfast
-        name = ""
-        calories = nil
-        editingEntry = nil
-    }
-}
-
-enum AppTab: Hashable { case log, calendar }
