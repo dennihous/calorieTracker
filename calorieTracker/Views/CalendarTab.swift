@@ -9,6 +9,7 @@ import SwiftUI
 struct CalendarTab: View {
     @EnvironmentObject private var store: CalorieStore
     @EnvironmentObject private var draft: EntryDraft
+    @EnvironmentObject private var auth: AuthViewModel
     @Binding var selectedTab: AppTab
 
     @State private var monthOffset: Int = 0
@@ -124,8 +125,15 @@ struct CalendarTab: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Calendar").font(.title2.weight(.bold)).minimumScaleFactor(0.85) 
+                ToolbarItem(placement: .principal) { Text("Calendar").font(.title2.weight(.bold)) }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) { auth.logout() } label: {
+                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

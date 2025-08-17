@@ -10,6 +10,7 @@ import SwiftUI
 struct LogView: View {
     @EnvironmentObject private var store: CalorieStore
     @EnvironmentObject private var draft: EntryDraft
+    @EnvironmentObject private var auth: AuthViewModel
 
     @FocusState private var focusedField: Field?
     enum Field { case name, calories }
@@ -145,11 +146,22 @@ struct LogView: View {
 
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // centered title
                 ToolbarItem(placement: .principal) {
                     Text("Calorie Log")
                         .font(.title2.weight(.bold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
+                }
+                // logout menu (top-right)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) { auth.logout() } label: {
+                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                    }
                 }
             }
             .toolbar { toolbarKeyboardDone }
