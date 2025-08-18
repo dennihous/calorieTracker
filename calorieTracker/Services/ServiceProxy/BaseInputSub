@@ -1,7 +1,0 @@
-class BaseInputSub: ServiceInputSub{
-    var message: Optional<message> = nil
-    init(){}
-    func recieveMessage(message: message)->Void{
-        self.message = message
-    }
-}
