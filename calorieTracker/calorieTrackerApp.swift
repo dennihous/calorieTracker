@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct calorieTrackerApp: App {
+struct CalorieTrackerApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppRootView()
         }
     }
 }
