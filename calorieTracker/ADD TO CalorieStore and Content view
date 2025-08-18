@@ -1,0 +1,18 @@
+TO CONTENTVIEW::::
+@StateObject private var store = CalorieStore(entry: Entry.entry)
+
+
+
+TO CALORIE STORE::::
+
+private var entry: Entry
+
+init(entry: Entry){
+  self.entry = entry
+}
+
+
+After rest of method body of add:
+
+var message: message = message(command:"serializeFE", payload: entry, meta:["destination": "sessionService"])
+self.entry.ingest(message: message)
